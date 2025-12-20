@@ -3,11 +3,10 @@ package com.catalogo.app;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
-import java.time.LocalDate;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
-import org.springframework.http.*;
 
 @RestController
 @RequestMapping("/lojas")
@@ -47,16 +46,16 @@ class LojaController {
     @Transactional
     public ResponseEntity<?> register(@RequestBody LojaRegisterRequest req) {
         if (req == null ||
-            req.nomeFantasia == null ||
-            req.razaoSocial == null ||
-            req.documentoResponsavel == null ||
-            req.responsavelNome == null ||
-            req.telefone == null ||
-            req.endereco == null ||
-            req.cidade == null ||
-            req.categoria == null ||
-            req.horarioFuncionamento == null ||
-            req.aceitouTermos == null) {
+                req.nomeFantasia == null ||
+                req.razaoSocial == null ||
+                req.documentoResponsavel == null ||
+                req.responsavelNome == null ||
+                req.telefone == null ||
+                req.endereco == null ||
+                req.cidade == null ||
+                req.categoria == null ||
+                req.horarioFuncionamento == null ||
+                req.aceitouTermos == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Dados incompletos");
         }
 
@@ -79,30 +78,4 @@ class LojaController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body("OK");
     }
-    @PutMapping("/admin/lojas/{id}/add-months")
-@Transactional
-public ResponseEntity<?> addMonths(
-        @PathVariable Long id,
-        @RequestParam int m,
-        @RequestHeader("X-ADMIN-TOKEN") String token
-) {
-    if (!"HudsonAdmin@2025#9X!k".equals(token)) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado");
-    }
-
-    Loja loja = em.find(Loja.class, id);
-    if (loja == null) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loja não encontrada");
-    }
-
-    LocalDate base = loja.paidUntil != null
-            ? loja.paidUntil
-            : LocalDate.now();
-
-    loja.paidUntil = base.plusMonths(m);
-    em.merge(loja);
-
-    return ResponseEntity.ok(loja.paidUntil);
-}
-
 }
