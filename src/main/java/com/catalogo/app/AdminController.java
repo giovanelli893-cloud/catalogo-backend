@@ -9,6 +9,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/admin")
@@ -44,8 +45,10 @@ class AdminController {
     // ======= BANIR / DESATIVAR =======
     @PostMapping("/lojas/{id}/banir")
     @Transactional
-    public ResponseEntity<?> banirLoja(@RequestHeader(value = "X-ADMIN-TOKEN", required = false) String token,
-                                      @PathVariable("id") Long id) {
+    public ResponseEntity<?> banirLoja(
+            @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String token,
+            @PathVariable("id") Long id
+    ) {
         try {
             requireAdmin(token);
         } catch (RuntimeException e) {
@@ -56,14 +59,17 @@ class AdminController {
         if (l == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loja não encontrada");
 
         l.ativo = false;
+        adminLog("banir lojaId=" + id);
         return ResponseEntity.ok("OK");
     }
 
     // ======= REATIVAR =======
     @PostMapping("/lojas/{id}/reativar")
     @Transactional
-    public ResponseEntity<?> reativarLoja(@RequestHeader(value = "X-ADMIN-TOKEN", required = false) String token,
-                                         @PathVariable("id") Long id) {
+    public ResponseEntity<?> reativarLoja(
+            @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String token,
+            @PathVariable("id") Long id
+    ) {
         try {
             requireAdmin(token);
         } catch (RuntimeException e) {
@@ -74,41 +80,42 @@ class AdminController {
         if (l == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loja não encontrada");
 
         l.ativo = true;
+        adminLog("reativar lojaId=" + id);
         return ResponseEntity.ok("OK");
+    }
+
+    // ======= ADICIONAR MESES (paidUntil) =======
+    @PostMapping("/lojas/{id}/add-months")
+    @Transactional
+    public ResponseEntity<?> addMonths(
+            @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String token,
+            @PathVariable("id") Long id,
+            @RequestParam(name = "m") int m
+    ) {
+        try {
+            requireAdmin(token);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
+
+        if (m <= 0 || m > 36) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("m inválido");
+        }
+
+        Loja l = em.find(Loja.class, id);
+        if (l == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loja não encontrada");
+
+        LocalDate today = LocalDate.now();
+        LocalDate base = (l.paidUntil != null && l.paidUntil.isAfter(today)) ? l.paidUntil : today;
+
+        l.paidUntil = base.plusMonths(m);
+
+        adminLog("extend lojaId=" + id + " by " + m + " months; paidUntil=" + l.paidUntil);
+        return ResponseEntity.ok(l.paidUntil.toString());
     }
 
     // ======= LOG SIMPLES DE AÇÕES ADMIN (por enquanto só imprime) =======
     private void adminLog(String msg) {
         System.out.println(Instant.now() + " [ADMIN] " + msg);
     }
-    @PostMapping("/lojas/{id}/add-months")
-@Transactional
-public ResponseEntity<?> addMonths(
-        @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String token,
-        @PathVariable("id") Long id,
-        @RequestParam(name = "m") int m
-) {
-    try {
-        requireAdmin(token);
-    } catch (RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-    }
-
-    if (m <= 0 || m > 36) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("m inválido");
-    }
-
-    Loja l = em.find(Loja.class, id);
-    if (l == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loja não encontrada");
-
-    java.time.LocalDate base = (l.paidUntil != null && l.paidUntil.isAfter(java.time.LocalDate.now()))
-            ? l.paidUntil
-            : java.time.LocalDate.now();
-
-    l.paidUntil = base.plusMonths(m);
-
-    adminLog("extend lojaId=" + id + " by " + m + " months; paidUntil=" + l.paidUntil);
-    return ResponseEntity.ok(l.paidUntil.toString());
-}
-
 }
