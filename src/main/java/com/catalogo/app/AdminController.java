@@ -118,4 +118,32 @@ class AdminController {
     private void adminLog(String msg) {
         System.out.println(Instant.now() + " [ADMIN] " + msg);
     }
+    @PostMapping("/lojas/{id}/set-paid-until")
+@Transactional
+public ResponseEntity<?> setPaidUntil(
+        @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String token,
+        @PathVariable("id") Long id,
+        @RequestParam(name = "date") String dateIso
+) {
+    try {
+        requireAdmin(token);
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+    }
+
+    Loja l = em.find(Loja.class, id);
+    if (l == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loja não encontrada");
+
+    java.time.LocalDate d;
+    try {
+        d = java.time.LocalDate.parse(dateIso);
+    } catch (Exception ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("date inválida (use YYYY-MM-DD)");
+    }
+
+    l.paidUntil = d;
+    adminLog("set paidUntil lojaId=" + id + " to " + l.paidUntil);
+    return ResponseEntity.ok(l.paidUntil.toString());
+}
+
 }
