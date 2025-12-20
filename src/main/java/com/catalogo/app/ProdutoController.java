@@ -68,5 +68,58 @@ public ResponseEntity<?> search(
         .getResultList()
     );
 }
+static class ProdutoLojaResult {
+    public Long produtoId;
+    public String produtoNome;
+    public String produtoCategoria;
+    public String produtoDescricao;
+    public Double produtoPreco;
+
+    public Long lojaId;
+    public String lojaNomeFantasia;
+    public String lojaTelefone;
+    public String lojaCidade;
+    public String lojaHorario;
+
+    public ProdutoLojaResult(Long produtoId, String produtoNome, String produtoCategoria, String produtoDescricao, Double produtoPreco,
+                             Long lojaId, String lojaNomeFantasia, String lojaTelefone, String lojaCidade, String lojaHorario) {
+        this.produtoId = produtoId;
+        this.produtoNome = produtoNome;
+        this.produtoCategoria = produtoCategoria;
+        this.produtoDescricao = produtoDescricao;
+        this.produtoPreco = produtoPreco;
+        this.lojaId = lojaId;
+        this.lojaNomeFantasia = lojaNomeFantasia;
+        this.lojaTelefone = lojaTelefone;
+        this.lojaCidade = lojaCidade;
+        this.lojaHorario = lojaHorario;
+    }
+}
+
+@GetMapping("/search2")
+public ResponseEntity<?> search2(
+        @RequestParam(name = "q", required = false) String q,
+        @RequestParam(name = "cidade", required = false) String cidade
+) {
+    String qq = (q == null) ? "" : q.trim().toLowerCase();
+    String cc = (cidade == null) ? "" : cidade.trim().toLowerCase();
+
+    return ResponseEntity.ok(
+        em.createQuery(
+            "select new com.catalogo.app.ProdutoController$ProdutoLojaResult(" +
+            "p.id, p.nome, p.categoria, p.descricao, p.preco, " +
+            "l.id, l.nomeFantasia, l.telefone, l.cidade, l.horarioFuncionamento" +
+            ") " +
+            "from Produto p, Loja l " +
+            "where p.ativo = true and l.ativo = true and p.lojaId = l.id " +
+            "and (:qq = '' or lower(p.nome) like concat('%', :qq, '%') or lower(p.categoria) like concat('%', :qq, '%')) " +
+            "and (:cc = '' or lower(l.cidade) = :cc)",
+            ProdutoLojaResult.class
+        )
+        .setParameter("qq", qq)
+        .setParameter("cc", cc)
+        .getResultList()
+    );
+}
 
 }
