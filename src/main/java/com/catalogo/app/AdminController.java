@@ -81,4 +81,34 @@ class AdminController {
     private void adminLog(String msg) {
         System.out.println(Instant.now() + " [ADMIN] " + msg);
     }
+    @PostMapping("/lojas/{id}/add-months")
+@Transactional
+public ResponseEntity<?> addMonths(
+        @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String token,
+        @PathVariable("id") Long id,
+        @RequestParam(name = "m") int m
+) {
+    try {
+        requireAdmin(token);
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+    }
+
+    if (m <= 0 || m > 36) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("m inválido");
+    }
+
+    Loja l = em.find(Loja.class, id);
+    if (l == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loja não encontrada");
+
+    java.time.LocalDate base = (l.paidUntil != null && l.paidUntil.isAfter(java.time.LocalDate.now()))
+            ? l.paidUntil
+            : java.time.LocalDate.now();
+
+    l.paidUntil = base.plusMonths(m);
+
+    adminLog("extend lojaId=" + id + " by " + m + " months; paidUntil=" + l.paidUntil);
+    return ResponseEntity.ok(l.paidUntil.toString());
+}
+
 }
