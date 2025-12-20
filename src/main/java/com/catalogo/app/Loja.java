@@ -1,4 +1,5 @@
 package com.catalogo.app;
+import java.time.LocalDate;
 
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -45,4 +46,9 @@ public class Loja {
     public Instant createdAt = Instant.now();
 
     public Long getId() { return id; }
+    @Column(nullable = true)
+    public LocalDate paidUntil; // até quando a mensalidade está ok
+    
+
+
 }
