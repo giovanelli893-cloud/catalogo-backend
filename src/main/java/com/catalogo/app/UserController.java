@@ -65,4 +65,14 @@ class UserController {
             throw new RuntimeException(e);
         }
     }
+    @GetMapping
+public ResponseEntity<?> list() {
+    return ResponseEntity.ok(
+        em.createQuery(
+            "select u from User u",
+            User.class
+        ).getResultList()
+    );
+}
+
 }
