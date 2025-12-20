@@ -9,7 +9,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
 
     @Column(nullable = false, length = 120)
     public String nome;
@@ -22,4 +22,6 @@ public class User {
 
     @Column(nullable = false)
     public Instant createdAt = Instant.now();
+
+    public Long getId() { return id; }
 }
