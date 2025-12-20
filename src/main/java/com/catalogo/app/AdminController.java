@@ -145,5 +145,33 @@ public ResponseEntity<?> setPaidUntil(
     adminLog("set paidUntil lojaId=" + id + " to " + l.paidUntil);
     return ResponseEntity.ok(l.paidUntil.toString());
 }
+    @PostMapping("/lojas/{id}/mark-paid")
+@Transactional
+public ResponseEntity<?> markPaid(
+        @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String token,
+        @PathVariable("id") Long id,
+        @RequestParam(name = "months") int months
+) {
+    try {
+        requireAdmin(token);
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+    }
+
+    if (months <= 0 || months > 36) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("months inválido");
+    }
+
+    Loja l = em.find(Loja.class, id);
+    if (l == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loja não encontrada");
+
+    java.time.LocalDate today = java.time.LocalDate.now();
+    java.time.LocalDate base = (l.paidUntil != null && l.paidUntil.isAfter(today)) ? l.paidUntil : today;
+    l.paidUntil = base.plusMonths(months);
+
+    adminLog("mark-paid lojaId=" + id + " months=" + months + " paidUntil=" + l.paidUntil);
+    return ResponseEntity.ok(l.paidUntil.toString());
+}
+
 
 }
