@@ -49,4 +49,24 @@ class ProdutoController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body("OK");
     }
+    @GetMapping("/search")
+public ResponseEntity<?> search(
+        @RequestParam(name = "q", required = false) String q,
+        @RequestParam(name = "cidade", required = false) String cidade
+) {
+    String qq = (q == null) ? "" : q.trim().toLowerCase();
+    String cc = (cidade == null) ? "" : cidade.trim().toLowerCase();
+
+    return ResponseEntity.ok(
+        em.createQuery(
+            "select p from Produto p " +
+            "where p.ativo = true " +
+            "and (:qq = '' or lower(p.nome) like concat('%', :qq, '%') or lower(p.categoria) like concat('%', :qq, '%'))",
+            Produto.class
+        )
+        .setParameter("qq", qq)
+        .getResultList()
+    );
+}
+
 }
