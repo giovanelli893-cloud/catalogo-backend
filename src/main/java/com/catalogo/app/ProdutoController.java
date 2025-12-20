@@ -112,6 +112,7 @@ public ResponseEntity<?> search2(
             ") " +
             "from Produto p, Loja l " +
             "where p.ativo = true and l.ativo = true and p.lojaId = l.id " +
+            "and (l.paidUntil is not null and l.paidUntil >= current_date) " +
             "and (:qq = '' or lower(p.nome) like concat('%', :qq, '%') or lower(p.categoria) like concat('%', :qq, '%')) " +
             "and (:cc = '' or lower(l.cidade) = :cc)",
             ProdutoLojaResult.class
